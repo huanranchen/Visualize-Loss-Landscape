@@ -13,8 +13,8 @@ image = norm(image)
 image = image.unsqueeze(0)
 pre = model(image)
 _, category = torch.max(pre, dim=1)
-criterion = torch.nn.CrossEntropyLoss
+criterion = torch.nn.CrossEntropyLoss()
 
-a = D2Landscape(lambda x: criterion(x, torch.tensor([category])), image)
+a = D2Landscape(lambda x: criterion(model(x), torch.tensor([category])), image)
 a.synthesize_coordinates()
 a.draw()

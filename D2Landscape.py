@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from torch import nn
-
+from tqdm import tqdm
 
 class D2Landscape():
     def __init__(self, model, input: torch.tensor):
@@ -36,13 +36,13 @@ class D2Landscape():
 
     def _compute_for_draw(self):
         result = []
-        for i in range(self.x.shape[0]):
+        for i in tqdm(range(self.x.shape[0])):
             for j in range(self.x.shape[1]):
                 now_x = self.x[i, j]
                 now_y = self.y[i, j]
                 x = self.input + self.x0 * now_x + self.y0 * now_y
                 loss = self.model(x)
-                result.append(loss)
+                result.append(loss.item())
         result = np.array(result)
         result = result.reshape(self.x.shape)
         return result
