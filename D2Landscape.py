@@ -12,21 +12,25 @@ class D2Landscape():
         '''
         self.model = model
         self.input = input
-
-    def synthesize_coordinates(self, x_min=-5, x_max=5, x_interval=0.25,
-                               y_min=-5, y_max=5, y_interval=0.25):
+        self.device = input.device
+        
+    @torch.no_grad()
+    def synthesize_coordinates(self, x_min=-2, x_max=2, x_interval=0.01,
+                               y_min=-2, y_max=2, y_interval=0.01):
         x = np.arange(x_min, x_max, x_interval)
         y = np.arange(y_min, y_max, y_interval)
         self.x, self.y = np.meshgrid(x, y)
 
+    @torch.no_grad()
     def draw(self):
         self._find_direction()
         z = self._compute_for_draw()
         self.draw3D(self.x, self.y, z)
 
+    @torch.no_grad()
     def _find_direction(self):
-        self.x0 = torch.randn(self.input.shape)
-        self.y0 = torch.randn(self.input.shape)
+        self.x0 = torch.randn(self.input.shape, device=self.device)
+        self.y0 = torch.randn(self.input.shape, device=self.device)
         self.x0 /= torch.norm(self.x0, p=2)
         self.y0 /= torch.norm(self.y0, p=2)
 
@@ -34,6 +38,7 @@ class D2Landscape():
         if torch.abs(self.x0.reshape(-1) @ self.y0.reshape(-1)) >= 0.1:
             self._find_direction()
 
+    @torch.no_grad()
     def _compute_for_draw(self):
         result = []
         for i in tqdm(range(self.x.shape[0])):
