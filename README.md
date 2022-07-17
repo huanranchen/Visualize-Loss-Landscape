@@ -1,2 +1,4 @@
 # Visualize-Loss-Landscape
-With respect to the input tensor instead of paramters of NN
+With respect to the input tensor
+
+And paramters of NN
