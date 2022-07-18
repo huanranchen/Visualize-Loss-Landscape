@@ -101,11 +101,11 @@ class LossLandscape:
 
     def __call__(
         self,
-        x_min=-0.1,
-        x_max=0.1,
+        x_min=-0.5,
+        x_max=0.5,
         x_interval=11,
-        y_min=-0.1,
-        y_max=0.1,
+        y_min=-0.5,
+        y_max=0.5,
         y_interval=11,
         *args,
         **kwargs,
@@ -147,7 +147,7 @@ class LossLandscape:
                     now_y = self.y[i, j]
                     loss = self._compute_loss_for_one_coordinate(now_x, now_y)
                     result.append(loss)
-                    print(f"--finish coordinates ({i},{j})")
+                    print(f"--finish coordinates ({i},{j}) loss:{round(loss,3)}")
 
         result = np.array(result)
         result = result.reshape(self.x.shape)
@@ -201,7 +201,7 @@ class LossLandscape:
             # adjust_lim = 0.7
             # ax.set_xlim(-1 * adjust_lim, 1 * adjust_lim)
             # ax.set_ylim(-1 * adjust_lim, 1 * adjust_lim)
-            ax.set_zlim(0, 7)
+            ax.set_zlim(0,max(6,mesh_z.max()))
             fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
             # frame = plt.gca()
             ax.axes.get_yaxis().set_visible(False)
