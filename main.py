@@ -1,44 +1,54 @@
 import torch
 import torch.nn as nn
-from Landscape4Model import Landscape4Model
-from data.data import get_loader, get_test_loader
-from pyramidnet import pyramidnet272
+
+from data import get_test_loader, get_train_loader
+from models.pyramidnet import pyramidnet272
+from LossLandscape import LossLandscape
 
 
-class GetLoss():
-    def __init__(self, batch_size=96):
-        train_image_path = './public_dg_0416/train/'
-        valid_image_path = './public_dg_0416/train/'
-        label2id_path = './dg_label_id_mapping.json'
-        test_image_path = './public_dg_0416/public_test_flat/'
-        self.train_loader = get_loader(batch_size=batch_size,
-                                       valid_category=None,
-                                       train_image_path=train_image_path,
-                                       valid_image_path=valid_image_path,
-                                       label2id_path=label2id_path)
-        self.test_loader_predict, _ = get_test_loader(batch_size=batch_size,
-                                                      transforms=None,
-                                                      label2id_path=label2id_path,
-                                                      test_image_path=test_image_path)
-        self.criterion = nn.CrossEntropyLoss()
-        self.device = torch.device('cuda')
+class PlotTrainer:
+    def __init__(
+        self,
+        train_image_path,
+        label2id_path,
+        batch_size,
+        num_workers,
+        track_mode,
+        img_size,
+        device,
+        x_interval,
+        y_interval,
+        pretrain_path,
+    ):
+        dataset = get_train_loader(
+            train_image_path, label2id_path, batch_size, num_workers, track_mode, False, img_size
+        ).dataset
+        criterion = nn.CrossEntropyLoss()
+        model = pyramidnet272(num_classes=60).to(device)
+        state_dict = torch.load(pretrain_path)
+        if "model" in state_dict:
+            state_dict = state_dict["model"]
+        model.load_state_dict(state_dict)
+        self.losslandscape = LossLandscape(model, dataset, criterion, 1e-4, 0.01, "3D")
+        self.device = torch.device("cuda")
+        self.x_interval = x_interval
+        self.y_interval = y_interval
 
-    @torch.no_grad()
-    def __call__(self, model, estimate_times=5):
-        result = 0
-        for step, (x, y) in enumerate(self.train_loader):
-            x = x.to(device)
-            y = y.to(device)
-            pre = model(x)
-            result += self.criterion(pre, y).item()
-
-            if step + 1 >= estimate_times:
-                return result / (step + 1)
+    def __call__(self):
+        self.losslandscape(x_interval=self.x_interval, y_interval=self.y_interval)
 
 
-device = torch.device('cuda')
-model = pyramidnet272(num_classes=60).to(device)
-model.load_state_dict(torch.load('model.pth'))
-w = Landscape4Model(model, GetLoss())
-w.synthesize_coordinates()
-w.draw()
+if __name__ == "__main__":
+    plottrainer = PlotTrainer(
+        train_image_path="/home/Bigdata/NICO/nico/train/",
+        label2id_path="/home/Bigdata/NICO/dg_label_id_mapping.json",
+        batch_size=48,
+        num_workers=4,
+        track_mode="track1",
+        img_size=224,
+        device=torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu"),
+        x_interval=11,
+        y_interval=11,
+        pretrain_path="./lib/model.pth",
+    )
+    plottrainer()
